@@ -75,6 +75,7 @@ module "cr" {
 | `registries` | `map(object)` | 必填 | 稳定 key 的 CR 实例；默认不启用公网 Endpoint。 |
 | `namespaces` | `map(object)` | `{}` | 引用模块管理 Registry 的稳定 key 命名空间。 |
 | `repositories` | `map(object)` | `{}` | 引用模块管理 Namespace 的稳定 key 仓库；默认 `Private`。 |
+| `include_update_timestamps` | `bool` | `false` | 是否在输出中包含 Provider 回传的仓库与机器人账号更新时间。 |
 | `robot_accounts` | `map(object)` | `{}` | 配置 CreateRepository、PullRepository 和/或 PushRepository 权限的受限机器人账号。 |
 | `vpc_endpoints` | `map(object)` | `{}` | 引用调用方 VPC 与子网的私网 Endpoint。 |
 | `public_endpoint_acl_policies` | `map(object)` | `{}` | 显式公网 Endpoint CIDR；拒绝 `0.0.0.0/0`。 |

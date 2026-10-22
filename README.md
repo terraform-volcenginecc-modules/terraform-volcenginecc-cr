@@ -75,6 +75,7 @@ module "cr" {
 | `registries` | `map(object)` | required | Stable-keyed CR registries; public endpoint is disabled by default. |
 | `namespaces` | `map(object)` | `{}` | Stable-keyed namespaces referencing a managed registry. |
 | `repositories` | `map(object)` | `{}` | Stable-keyed repositories referencing a managed namespace; defaults to `Private`. |
+| `include_update_timestamps` | `bool` | `false` | Include provider-returned repository and robot-account update timestamps in outputs. |
 | `robot_accounts` | `map(object)` | `{}` | Scoped robot accounts with CreateRepository, PullRepository, and/or PushRepository permissions. |
 | `vpc_endpoints` | `map(object)` | `{}` | Private endpoints referencing caller-owned VPCs and subnets. |
 | `public_endpoint_acl_policies` | `map(object)` | `{}` | Opt-in public endpoint CIDRs; `0.0.0.0/0` is rejected. |

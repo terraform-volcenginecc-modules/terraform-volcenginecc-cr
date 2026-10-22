@@ -71,8 +71,8 @@ resource "volcenginecc_cr_robot_account" "this" {
     }
 
     precondition {
-      condition     = each.value.random_password || each.value.password != null
-      error_message = "robot_accounts password must be set when random_password is false."
+      condition     = each.value.random_password || try(length(trimspace(each.value.password)), 0) > 0
+      error_message = "robot_accounts password must be non-null, non-empty, and non-whitespace when random_password is false."
     }
   }
 }

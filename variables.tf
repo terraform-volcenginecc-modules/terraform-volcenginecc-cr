@@ -51,13 +51,19 @@ variable "repositories" {
   validation {
     condition = alltrue([
       for repository in values(var.repositories) :
-      can(regex("^[a-z0-9]+([./-][a-z0-9]+|_{1,2}[a-z0-9]+)*$", repository.name)) &&
+      can(regex("^[a-z0-9]+([./-]+[a-z0-9]+|_{1,2}[a-z0-9]+)*$", repository.name)) &&
       length(repository.name) <= 128 &&
       contains(["Private", "Public"], repository.access_level) &&
       try(repository.description == null || length(repository.description) <= 300, true)
     ])
-    error_message = "Each repository must use a supported 1-128 character lowercase name, have Private or Public access_level, and have a description of at most 300 characters."
+    error_message = "Each repository must use a supported 1-128 character lowercase name; consecutive '.', '/', and '-' separators are allowed; access_level must be Private or Public; description must be at most 300 characters."
   }
+}
+
+variable "include_update_timestamps" {
+  type        = bool
+  description = "Whether to include provider-returned repository and robot-account update timestamps in module outputs. Defaults to false to avoid exposing fields that can cause downstream output drift."
+  default     = false
 }
 
 variable "robot_accounts" {
@@ -81,6 +87,7 @@ variable "robot_accounts" {
     condition = alltrue([
       for account in values(var.robot_accounts) :
       can(regex("^crrobot@.+$", account.username)) &&
+      account.duration == floor(account.duration) &&
       (account.duration == -1 || (account.duration >= 1 && account.duration <= 366)) &&
       length(account.permissions) > 0 &&
       alltrue([
@@ -90,7 +97,7 @@ variable "robot_accounts" {
         alltrue([for action in permission.actions : contains(["CreateRepository", "PullRepository", "PushRepository"], action)])
       ])
     ])
-    error_message = "Robot accounts must use a crrobot@ username, have duration -1 or 1-366, and grant one or more supported actions on non-empty resources."
+    error_message = "Robot accounts must use a crrobot@ username, have integer duration -1 or 1-366, and grant one or more supported actions on non-empty resources."
   }
 }
 
@@ -98,8 +105,8 @@ variable "vpc_endpoints" {
   type = map(object({
     registry_key = string
     vpcs = map(object({
-      vpc_id     = optional(string, null)
-      subnet_id  = optional(string, null)
+      vpc_id     = string
+      subnet_id  = string
       account_id = optional(number, null)
     }))
   }))
@@ -112,10 +119,11 @@ variable "vpc_endpoints" {
       length(endpoint.vpcs) > 0 &&
       alltrue([
         for vpc in values(endpoint.vpcs) :
-        vpc.vpc_id != null && vpc.subnet_id != null
+        length(trimspace(vpc.vpc_id)) > 0 &&
+        length(trimspace(vpc.subnet_id)) > 0
       ])
     ])
-    error_message = "Each VPC endpoint must include at least one VPC with vpc_id and subnet_id."
+    error_message = "Each VPC endpoint must include at least one VPC with non-empty vpc_id and subnet_id."
   }
 }
 
