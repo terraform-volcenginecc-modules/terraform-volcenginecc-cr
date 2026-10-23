@@ -24,7 +24,7 @@ Terraform `>= 1.5.0`，`volcengine/volcenginecc >= 0.0.70`。
 
 ## 6. 资源
 
-已发布的 CR 模块创建 CR 层级、两个受限机器人账号和一个 CR VPC Endpoint。仅在显式启用公网 Endpoint 后才创建公网 CIDR 白名单。
+已发布的 CR 模块创建 CR 层级、两个命名空间范围的机器人账号和一个 CR VPC Endpoint。仅在显式启用公网 Endpoint 后才创建公网 CIDR 白名单。
 
 ## 7. 输入
 
@@ -34,8 +34,6 @@ Registry 和机器人账号名称，以及 VKE VPC/子网/账号值为必填项�
 
 `repositories`、`robot_accounts` 和 `vke_private_endpoint` 返回不敏感元数据。不会输出机器人账号密码。
 
-当前 CR OpenAPI 明确支持 `permissions.resource = "*"` 表示实例内全部命名空间，因此本示例使用它以确保机器人账号可创建。CI 账号只有拉取和推送动作，VKE 账号只有拉取动作；如需命名空间或项目级范围，必须使用经 CR OpenAPI 明确支持的资源标识，不能直接传入裸命名空间名称。
-
 ## 9. 注意事项
 
-VKE 集群及其镜像拉取 Secret 仍由调用方管理。Provider 不支持 CR 保留策略或 CR IAM 用户/角色授权。apply 后请确认第二次 plan 无变更，再在已授权的临时环境验证实际 CI 推送、VKE 拉取和 destroy 清理。
+VKE 集群及其镜像拉取 Secret 仍由调用方管理。两个机器人账号均以 `var.namespace_name` 作为权限资源：CI 仅拉取和推送，VKE 仅拉取。Provider 不支持 CR 保留策略或 CR IAM 用户/角色授权。apply 后请确认第二次 plan 无变更，再在已授权的临时环境验证实际 CI 推送、VKE 拉取和 destroy 清理。

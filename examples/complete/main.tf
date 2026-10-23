@@ -45,8 +45,8 @@ module "cr" {
       username     = var.ci_robot_username
       duration     = 366
       permissions = {
-        registry = {
-          resource = "*"
+        namespace = {
+          resource = var.namespace_name
           actions  = ["PullRepository", "PushRepository"]
         }
       }
@@ -56,8 +56,8 @@ module "cr" {
       username     = var.vke_robot_username
       duration     = 366
       permissions = {
-        registry = {
-          resource = "*"
+        namespace = {
+          resource = var.namespace_name
           actions  = ["PullRepository"]
         }
       }

@@ -24,7 +24,7 @@ Terraform `>= 1.5.0` and `volcengine/volcenginecc >= 0.0.70`.
 
 ## 6. Resources
 
-The published CR module creates the CR hierarchy, two scoped robot accounts, and a CR VPC endpoint. A public CIDR allowlist is created only after explicit endpoint opt-in.
+The published CR module creates the CR hierarchy, two namespace-scoped robot accounts, and a CR VPC endpoint. A public CIDR allowlist is created only after explicit endpoint opt-in.
 
 ## 7. Inputs
 
@@ -36,4 +36,4 @@ Registry and robot-account names plus VKE VPC/subnet/account values are required
 
 ## 9. Notes
 
-The VKE cluster and its image-pull Secret remain caller-owned. The Provider does not expose CR retention policies or CR IAM user/role grants. Confirm the second plan has no changes after apply, then validate actual CI push, VKE pull, and destroy cleanup in an authorized disposable environment.
+The VKE cluster and its image-pull Secret remain caller-owned. Both robot accounts use `var.namespace_name` as their permission resource: CI can pull and push; VKE can only pull. The Provider does not expose CR retention policies or CR IAM user/role grants. Confirm the second plan has no changes after apply, then validate actual CI push, VKE pull, and destroy cleanup in an authorized disposable environment.

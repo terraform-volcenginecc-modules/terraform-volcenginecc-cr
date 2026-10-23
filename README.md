@@ -99,4 +99,4 @@ module "cr" {
 - Import existing resources before declaring them, using Provider identifiers: registry `name`, namespace `registry|name`, repository `registry|namespace|name`, and robot account `registry|username`.
 - After applying changes, run a second `terraform plan` and require `No changes` before treating the configuration as converged.
 - This module does not manage caller-owned ECS instances, subnets, security groups, or VPCs. When those resources are destroyed in the same Terraform operation, underlying ENI release can complete asynchronously after ECS deletion. If a dependent subnet deletion returns an in-use error, wait for the ENI release and rerun the destroy; do not add a fixed sleep to this module.
-- Complete uses the CR OpenAPI-documented `permissions.resource = "*"` form: CI has pull/push actions and VKE has pull-only access. This form is registry-wide; use a narrower documented resource identifier when CR publishes one.
+- Complete scopes robot-account permissions to the configured namespace: CI has pull/push actions and VKE has pull-only access. Validate the resource identifier against the target CR API before production use.

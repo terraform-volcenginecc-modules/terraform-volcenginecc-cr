@@ -99,4 +99,4 @@ module "cr" {
 - 声明已有资源前请按 Provider 标识导入：Registry 为 `name`，Namespace 为 `registry|name`，Repository 为 `registry|namespace|name`，机器人账号为 `registry|username`。
 - apply 后应执行第二次 `terraform plan`，只有返回 `No changes` 时才可认为配置已收敛。
 - 模块不管理调用方的 ECS、子网、安全组和 VPC。若在同一次 Terraform 操作中销毁这些资源，底层 ENI 可能在 ECS 删除后异步释放；子网删除返回占用错误时，应等待 ENI 释放后重新执行 destroy，不要在本模块中加入固定等待时间。
-- complete 使用 CR OpenAPI 明确支持的 `permissions.resource = "*"`：CI 仅推拉，VKE 仅拉取；该格式为实例范围，命名空间或项目级资源标识尚待 OpenAPI 明确后收敛。
+- complete 将机器人账号权限收窄至配置的命名空间：CI 仅推拉，VKE 仅拉取。投入生产前请按目标 CR API 验证资源标识格式。
