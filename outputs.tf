@@ -36,6 +36,21 @@ output "repositories" {
         name         = repository.name
         access_level = repository.access_level
         created_time = repository.create_time
+        repository_url = format(
+          "%s-%s.cr.volces.com/%s/%s",
+          repository.registry,
+          var.region,
+          repository.namespace,
+          repository.name,
+        )
+        repository_trn = format(
+          "trn:cr:%s:%s:repository/%s/%s/%s",
+          var.region,
+          var.account_id,
+          repository.registry,
+          repository.namespace,
+          repository.name,
+        )
       },
       var.include_update_timestamps ? {
         updated_time = repository.update_time

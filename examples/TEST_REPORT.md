@@ -6,6 +6,8 @@
 
 basic 和 complete 在 apply 后第二次 plan 均返回 `No changes`。complete 的 CI 推拉与 VKE 只拉取机器人账号均已成功创建。所有本次创建的资源已销毁；Registry、Namespace、Repository 与 VPC Endpoint 回查均返回 `Data Source Not Found`，机器人账号因父 Registry 已删除返回 `NotFound.Registry`。
 
+后续版本新增的 `repository_url` 和 `repository_trn` 已在独立 basic 临时环境完成真实 apply、值断言和二次 plan 验证。该验证只覆盖 URL/TRN 输出；complete 中收窄至命名空间的机器人权限需要单独复测。
+
 ## 2. 验证环境
 
 | 项目 | 值 |
@@ -16,6 +18,7 @@ basic 和 complete 在 apply 后第二次 plan 均返回 `No changes`。complete
 | 地域 | `cn-beijing` |
 | Provider 凭据 | 通过进程环境变量传入用户提供的原始 AccessKeyID、SecretAccessKey 和空 SessionToken；未写入文件、日志或 State 输出 |
 | 测试隔离 | 临时验证目录 `tests/real-cloud-run/`，未修改发布示例的远程模块 source |
+| URL/TRN 输出复测 | 2026-10-23；临时本地调用方，Provider `v0.0.71`，Terraform `v1.5.7`；未修改发布示例的远程模块 source |
 
 ## 3. 验证对象
 
@@ -35,6 +38,9 @@ basic 和 complete 在 apply 后第二次 plan 均返回 `No changes`。complete
 | basic：Repository 输出 | 部分通过 | Provider 返回可用的 ID、Registry、Namespace、Name、Private 可见性及创建/更新时间；该 Schema 不提供 repository URL 或 ARN。 |
 | basic：二次 plan | 通过 | 输出 `No changes. Your infrastructure matches the configuration.` |
 | basic：destroy 与回查 | 通过 | destroy 为 `3 destroyed`；Registry、Namespace、Repository 数据源均返回 `Data Source Not Found`。 |
+| basic：派生 Repository URL/TRN | 通过 | apply 后断言 `repository_url = crout1023172626-cn-beijing.cr.volces.com/verify/api`，`repository_trn = trn:cr:cn-beijing:2107436677:repository/crout1023172626/verify/api`；均与 Registry、Region、Account、Namespace、Repository 输入一致。 |
+| basic：派生输出二次 plan | 通过 | 新输出 apply 后执行 `plan -detailed-exitcode` 返回 `No changes. Your infrastructure matches the configuration.`。 |
+| basic：派生输出 destroy | 通过 | 临时 Registry、Namespace、Repository 均已 destroy，输出为 `3 destroyed`。 |
 | complete：plan | 通过 | 计划为 `7 to add`：Registry、Namespace、2 Repository、2 RobotAccount、VPC Endpoint。 |
 | complete：Registry/Namespace/Repository | 通过 | Registry、Namespace、2 个 `Private` Repository 创建成功。 |
 | complete：VPC Endpoint | 通过 | 指定 VPC、Subnet、Account 的 Endpoint 创建成功，后续 destroy 成功。 |
@@ -83,15 +89,26 @@ Destroy complete! Resources: 7 destroyed.
 terraform -chdir=tests/real-cloud-run/absence plan
 Registry, Namespace, Repository and VPC Endpoint: Data Source Not Found
 Robot accounts: NotFound.Registry after parent Registry deletion
+
+terraform -chdir=/tmp/cr-output-validation apply
+Apply complete! Resources: 3 added, 0 changed, 0 destroyed.
+repository_url = "crout1023172626-cn-beijing.cr.volces.com/verify/api"
+repository_trn = "trn:cr:cn-beijing:2107436677:repository/crout1023172626/verify/api"
+
+terraform -chdir=/tmp/cr-output-validation plan -detailed-exitcode
+No changes. Your infrastructure matches the configuration.
+
+terraform -chdir=/tmp/cr-output-validation destroy -auto-approve
+Destroy complete! Resources: 3 destroyed.
 ```
 
 ## 6. 未完成项与限制
 
-1. 线上 Provider `v0.0.71` 不支持 CR 生命周期策略、镜像扫描、CR IAM 策略、`force_delete`、Repository URL 或 ARN，模块不能伪造这些字段。
-2. 官方 OpenAPI 当前明确示例仅覆盖 `permissions.resource = "*"`。该值范围为整个 Registry；命名空间或项目级资源格式尚未在 API 文档中给出，不能宣称该示例具备命名空间级最小范围。
+1. 线上 Provider `v0.0.71` 不支持 CR 生命周期策略、镜像扫描、CR IAM 策略和 `force_delete`。Provider 不回传 Repository URL/TRN；模块根据官方系统域名和 IAM TRN 格式派生这两个输出，并已完成 basic 真实云验证。
+2. complete 示例当前使用命名空间作为机器人权限资源；此前真实云验证使用的是 `permissions.resource = "*"`。本次未复测命名空间资源格式，不能将旧验证结果外推至新权限配置。
 3. 因不存在 `force_delete`，也没有可控的已推送测试镜像清理 API，本次未验证非空仓库删除策略。
 
 ## 7. 后续动作
 
-1. CR OpenAPI 公开命名空间或项目级 `permissions.resource` 精确格式后，将 complete 从 `*` 收敛为相应最小范围并重跑验证。
+1. 使用 complete 示例对命名空间范围的机器人权限执行真实 apply、二次 plan、destroy 和推拉验证。
 2. Provider 支持生命周期、扫描、IAM 授权与非空仓库删除能力后，补充相应输入、实现与真实云验证。

@@ -28,11 +28,11 @@ The published CR module creates a registry, namespace, and private repository.
 
 ## 7. Inputs
 
-`region`, `registry_name`, and `namespace_name` are required. `repository_name` defaults to `api`; `project` defaults to `default`.
+`region`, `account_id`, `registry_name`, and `namespace_name` are required. `account_id` must own the CR registry and is used to construct the repository TRN. `repository_name` defaults to `api`; `project` defaults to `default`.
 
 ## 8. Outputs
 
-`registry` and `repository` return non-sensitive CR metadata.
+`registry` and `repository` return non-sensitive CR metadata. `repository_url` is the tag-free system-domain address for Docker and VKE; `repository_trn` is the IAM repository resource identifier.
 
 ## 9. Notes
 

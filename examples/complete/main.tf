@@ -6,6 +6,9 @@ module "cr" {
   source  = "terraform-volcenginecc-modules/cr/volcenginecc"
   version = "~> 1.0"
 
+  region     = var.region
+  account_id = var.account_id
+
   registries = {
     application = {
       name                    = var.registry_name

@@ -28,11 +28,11 @@ Terraform `>= 1.5.0`，`volcengine/volcenginecc >= 0.0.70`。
 
 ## 7. 输入
 
-必填项为 `region`、`registry_name` 和 `namespace_name`。`repository_name` 默认为 `api`，`project` 默认为 `default`。
+必填项为 `region`、`account_id`、`registry_name` 和 `namespace_name`。`account_id` 必须为 CR 实例所属账号，用于生成仓库 TRN。`repository_name` 默认为 `api`，`project` 默认为 `default`。
 
 ## 8. 输出
 
-`registry` 和 `repository` 返回不敏感的 CR 元数据。
+`registry` 和 `repository` 返回不包含敏感信息的 CR 元数据。`repository_url` 是供 Docker 和 VKE 使用的不含 tag 的系统域名地址；`repository_trn` 是 IAM 仓库资源标识。
 
 ## 9. 注意事项
 

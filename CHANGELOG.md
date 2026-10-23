@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add tag-free system-domain repository URLs and IAM repository TRNs, derived from the configured CR region, owning account ID, registry, namespace, and repository name.
 - Reject empty VPC and subnet IDs, reject fractional robot-account durations, and allow consecutive supported repository separators.
 - Make repository and robot-account update timestamps opt-in outputs, and reject null, empty, or whitespace-only manually supplied robot passwords.
 - Add the CR module for registries, namespaces, repositories, robot accounts, VPC endpoints, and public endpoint CIDR allowlists.

@@ -3,6 +3,11 @@ variable "region" {
   description = "Volcengine region for the CR resources."
 }
 
+variable "account_id" {
+  type        = number
+  description = "Volcengine account ID that owns the CR registry and is used in repository TRNs."
+}
+
 variable "registry_name" {
   type        = string
   description = "Unique CR registry name, 3-30 lowercase letters, digits, and hyphens."

@@ -17,6 +17,9 @@ module "cr" {
   source  = "terraform-volcenginecc-modules/cr/volcenginecc"
   version = "~> 1.0"
 
+  region     = "cn-beijing"
+  account_id = 2000000000
+
   registries = {
     app = {
       name = "example-cr"
@@ -72,6 +75,8 @@ module "cr" {
 
 | Name | Type | Default | Description |
 |---|---|---|---|
+| `region` | `string` | required | CR region ID used to construct system-domain repository URLs and repository TRNs; must match the Provider region. |
+| `account_id` | `number` | required | Account ID that owns the CR registries, used to construct repository TRNs. |
 | `registries` | `map(object)` | required | Stable-keyed CR registries; public endpoint is disabled by default. |
 | `namespaces` | `map(object)` | `{}` | Stable-keyed namespaces referencing a managed registry. |
 | `repositories` | `map(object)` | `{}` | Stable-keyed repositories referencing a managed namespace; defaults to `Private`. |
@@ -86,13 +91,13 @@ module "cr" {
 |---|---|
 | `registries` | Registry IDs, names, status, and public-endpoint state keyed by input key. |
 | `namespaces` | Namespace metadata keyed by input key. |
-| `repositories` | Repository metadata keyed by input key. |
+| `repositories` | Repository metadata, tag-free system-domain URLs, and IAM repository TRNs keyed by input key. |
 | `robot_accounts` | Robot account metadata without passwords, keyed by input key. |
 | `vpc_endpoints` | Private endpoint details and cloud-returned VPC addresses keyed by input key. |
 
 ## 9. Notes
 
-- Provider schema exposes no CR image-retention-policy resource, image scanning setting, CR IAM user/role authorization resource, `force_delete` setting, or repository URL/ARN output. This module does not pretend to manage those capabilities.
+- Provider schema exposes no CR image-retention-policy resource, image scanning setting, CR IAM user/role authorization resource, or `force_delete` setting. The Provider does not return repository URLs or TRNs, so this module derives `repository_url` from the documented standard-instance system-domain convention and `repository_trn` from the documented CR IAM format.
 - A robot account is the supported Provider-managed push/pull identity. A supplied or generated password is not returned, but the current Provider does not mark it sensitive and can retain it in State; use an encrypted remote backend, do not put it in source files, and rotate it through an approved secret workflow.
 - The VKE integration creates a CR VPC endpoint only. Configure the resulting registry endpoint and robot credential in the VKE workload's image-pull Secret outside this module.
 - Enable the public endpoint only when necessary and use narrowly scoped CIDRs. Private repositories, private endpoints, and pull-only VKE accounts are the default posture.
@@ -100,3 +105,4 @@ module "cr" {
 - After applying changes, run a second `terraform plan` and require `No changes` before treating the configuration as converged.
 - This module does not manage caller-owned ECS instances, subnets, security groups, or VPCs. When those resources are destroyed in the same Terraform operation, underlying ENI release can complete asynchronously after ECS deletion. If a dependent subnet deletion returns an in-use error, wait for the ENI release and rerun the destroy; do not add a fixed sleep to this module.
 - Complete scopes robot-account permissions to the configured namespace: CI has pull/push actions and VKE has pull-only access. Validate the resource identifier against the target CR API before production use.
+- `repository_url` is tag-free and uses the standard-instance system domain: `<registry>-<region>.cr.volces.com/<namespace>/<repository>`. It is not a custom or console-selected default domain. `repository_trn` uses the CR IAM format: `trn:cr:<region>:<account_id>:repository/<registry>/<namespace>/<repository>`.

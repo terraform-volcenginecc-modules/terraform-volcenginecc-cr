@@ -28,11 +28,11 @@ The published CR module creates the CR hierarchy, two namespace-scoped robot acc
 
 ## 7. Inputs
 
-Registry and robot-account names plus VKE VPC/subnet/account values are required. The public endpoint is disabled by default; set a non-global CI CIDR only when enabling it.
+Registry and robot-account names plus VKE VPC/subnet/account values are required. `account_id` must own both the CR registry, for repository TRN construction, and the VKE VPC used by this example. The public endpoint is disabled by default; set a non-global CI CIDR only when enabling it.
 
 ## 8. Outputs
 
-`repositories`, `robot_accounts`, and `vke_private_endpoint` return non-sensitive metadata. Robot passwords are never output.
+`repositories`, `repository_urls`, `repository_trns`, `robot_accounts`, and `vke_private_endpoint` return non-sensitive metadata. Repository URLs are tag-free system-domain addresses; robot passwords are never output.
 
 ## 9. Notes
 

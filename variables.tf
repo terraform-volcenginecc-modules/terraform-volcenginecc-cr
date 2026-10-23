@@ -1,3 +1,23 @@
+variable "region" {
+  type        = string
+  description = "Volcengine region ID used to construct CR system-domain repository URLs and repository TRNs. It must match the region configured in the Provider."
+
+  validation {
+    condition     = length(trimspace(var.region)) > 0
+    error_message = "region must be a non-empty Volcengine region ID."
+  }
+}
+
+variable "account_id" {
+  type        = number
+  description = "Volcengine account ID that owns the CR registries, used to construct repository TRNs."
+
+  validation {
+    condition     = var.account_id > 0 && var.account_id == floor(var.account_id)
+    error_message = "account_id must be a positive integer."
+  }
+}
+
 variable "registries" {
   type = map(object({
     name                    = string

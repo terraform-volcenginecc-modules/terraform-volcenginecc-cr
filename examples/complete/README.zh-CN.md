@@ -28,11 +28,11 @@ Terraform `>= 1.5.0`，`volcengine/volcenginecc >= 0.0.70`。
 
 ## 7. 输入
 
-Registry 和机器人账号名称，以及 VKE VPC/子网/账号值为必填项。公网 Endpoint 默认关闭；启用时仅设置非全网开放的 CI CIDR。
+Registry 和机器人账号名称，以及 VKE VPC/子网/账号值为必填项。`account_id` 必须同时是 CR 实例所属账号（用于生成仓库 TRN）和本示例中 VKE VPC 所属账号。公网 Endpoint 默认关闭；启用时仅设置非全网开放的 CI CIDR。
 
 ## 8. 输出
 
-`repositories`、`robot_accounts` 和 `vke_private_endpoint` 返回不敏感元数据。不会输出机器人账号密码。
+`repositories`、`repository_urls`、`repository_trns`、`robot_accounts` 和 `vke_private_endpoint` 返回不敏感元数据。仓库 URL 为不含 tag 的系统域名地址；不会输出机器人账号密码。
 
 ## 9. 注意事项
 
