@@ -92,9 +92,11 @@ module "cr" {
 
 ## 9. 注意事项
 
-- 完整场景状态为 `provider-blocked`。Provider Schema 没有 CR 镜像保留策略资源，也没有 CR IAM 用户/角色授权资源；模块不会伪造这两类能力。
+- Provider Schema 未提供 CR 镜像保留策略资源、镜像扫描开关、CR IAM 用户/角色授权资源、`force_delete` 设置或 Repository URL/ARN 输出；模块不会伪造这些能力。
 - 机器人账号是当前 Provider 可管理的推拉身份。手工提供或随机生成的密码不会被输出，但当前 Provider 未将其标记为敏感且可能保存在 State 中；不要写入源码，须使用加密远端 State，并通过受控密钥流程轮换。
 - VKE 集成只创建 CR VPC Endpoint。请在模块外使用返回的镜像地址和机器人凭据配置 VKE 工作负载的镜像拉取 Secret。
 - 仅在必要时启用公网 Endpoint，并使用最小范围 CIDR。默认安全姿态是私有仓库、私网 Endpoint 和 VKE 只拉取账号。
 - 声明已有资源前请按 Provider 标识导入：Registry 为 `name`，Namespace 为 `registry|name`，Repository 为 `registry|namespace|name`，机器人账号为 `registry|username`。
-- 真实云验证报告见 `examples/TEST_REPORT.md`。basic 和 complete 均已完成 apply、二次 `terraform plan` 的 `No changes`、destroy 和资源不存在回查。complete 的机器人账号使用 CR OpenAPI 明确支持的 `permissions.resource = "*"`：CI 仅推拉，VKE 仅拉取；该格式为实例范围，命名空间或项目级资源标识尚待 OpenAPI 明确后收敛。
+- apply 后应执行第二次 `terraform plan`，只有返回 `No changes` 时才可认为配置已收敛。
+- 模块不管理调用方的 ECS、子网、安全组和 VPC。若在同一次 Terraform 操作中销毁这些资源，底层 ENI 可能在 ECS 删除后异步释放；子网删除返回占用错误时，应等待 ENI 释放后重新执行 destroy，不要在本模块中加入固定等待时间。
+- complete 使用 CR OpenAPI 明确支持的 `permissions.resource = "*"`：CI 仅推拉，VKE 仅拉取；该格式为实例范围，命名空间或项目级资源标识尚待 OpenAPI 明确后收敛。
