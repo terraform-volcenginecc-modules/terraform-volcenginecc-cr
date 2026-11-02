@@ -1,88 +1,108 @@
 # terraform-volcenginecc-cr
 
-Terraform Module scaffold for the VolcengineCC provider.
+Terraform module for Volcengine Container Registry (CR) registries, namespaces, private OCI repositories, robot accounts, VPC endpoints, and explicit public endpoint CIDR allowlists.
 
-> Status: Scaffold only. The Terraform implementation for this repository is
-> not available yet, and this repository is not ready for production use.
+## 1. Overview
 
-## Overview
+The module owns the CR resources declared in its input maps. The caller owns provider authentication, region configuration, IAM users and roles, VKE clusters, VPCs, subnets, image build and push operations, and Kubernetes image-pull Secrets.
 
-This repository reserves the module name `volcengine/cr/volcenginecc`.
+Registry name, project, type, and tags; all namespace identity fields; repository identity fields; robot-account registry and username; VPC-endpoint registry; and public allowlist entries are create-only in the current Provider schema. Keep map keys stable because changing a key changes the Terraform address.
 
-The module is intended to provide a reusable Terraform abstraction for the
-`cr` scenario using the `volcengine/volcenginecc` provider.
+## 2. Usage
 
-Current scope:
+### 2.1 Basic Usage
 
-- Repository and module scaffold only.
-- No Terraform resources or data sources are currently managed.
-- No production-readiness or real-cloud validation claim is made.
+```hcl
+module "cr" {
+  source  = "terraform-volcenginecc-modules/cr/volcenginecc"
+  version = "~> 1.0"
 
-## Usage
+  region     = "cn-beijing"
+  account_id = 2000000000
 
-The module implementation is not available yet. A runnable configuration will
-be added together with the first implementation release.
+  registries = {
+    app = {
+      name = "example-cr"
+    }
+  }
 
-Provider authentication and region configuration must be supplied by the
-caller. Do not commit credentials, access keys, secrets, Terraform state, or
-plan files.
+  namespaces = {
+    team = {
+      registry_key = "app"
+      name         = "team"
+    }
+  }
 
-## Examples
+  repositories = {
+    api = {
+      namespace_key = "team"
+      name          = "api"
+    }
+  }
+}
+```
 
-Examples will be added when the module implementation is available.
+## 3. Examples
 
-Planned examples:
+- `basic` describes a private registry, namespace, and repository.
+- `complete` describes CI push permissions, a VKE private pull endpoint, optional public CIDR allowlisting, and separate pull-only credentials.
 
-- `examples/basic`
-- `examples/complete`
-
-## Requirements
+## 4. Requirements
 
 | Name | Version |
 |---|---|
-| Terraform | To be defined with the first implementation |
-| `volcengine/volcenginecc` | To be defined with the first implementation |
+| Terraform | `>= 1.5.0` |
+| VolcengineCC Provider | `>= 0.0.70` |
 
-## Providers
+## 5. Providers
 
 | Name | Source |
 |---|---|
 | `volcenginecc` | `volcengine/volcenginecc` |
 
-## Resources
+## 6. Resources
 
-No resources or data sources are currently managed.
+| Name | Purpose |
+|---|---|
+| `volcenginecc_cr_registry` | CR registry instance |
+| `volcenginecc_cr_name_space` | Registry namespace |
+| `volcenginecc_cr_repository` | Private or public OCI repository |
+| `volcenginecc_cr_robot_account` | Scoped CI/CD or VKE robot credentials |
+| `volcenginecc_cr_vpc_endpoint` | Private VPC image-pull endpoint |
+| `volcenginecc_cr_endpoint_acl_policy` | Explicit public endpoint CIDR allowlist |
 
-The resource inventory will be documented before the first release.
+## 7. Inputs
 
-## Inputs
+| Name | Type | Default | Description |
+|---|---|---|---|
+| `region` | `string` | required | CR region ID used to construct system-domain repository URLs and repository TRNs; must match the Provider region. |
+| `account_id` | `number` | required | Account ID that owns the CR registries, used to construct repository TRNs. |
+| `registries` | `map(object)` | required | Stable-keyed CR registries; public endpoint is disabled by default. |
+| `namespaces` | `map(object)` | `{}` | Stable-keyed namespaces referencing a managed registry. |
+| `repositories` | `map(object)` | `{}` | Stable-keyed repositories referencing a managed namespace; defaults to `Private`. |
+| `include_update_timestamps` | `bool` | `false` | Include provider-returned repository and robot-account update timestamps in outputs. |
+| `robot_accounts` | `map(object)` | `{}` | Scoped robot accounts with CreateRepository, PullRepository, and/or PushRepository permissions. |
+| `vpc_endpoints` | `map(object)` | `{}` | Private endpoints referencing caller-owned VPCs and subnets. |
+| `public_endpoint_acl_policies` | `map(object)` | `{}` | Opt-in public endpoint CIDRs; `0.0.0.0/0` is rejected. |
 
-No input variables are currently defined.
+## 8. Outputs
 
-All inputs will document their type, default value, required status,
-validation, ownership, and replacement behavior when implemented.
+| Name | Description |
+|---|---|
+| `registries` | Registry IDs, names, status, and public-endpoint state keyed by input key. |
+| `namespaces` | Namespace metadata keyed by input key. |
+| `repositories` | Repository metadata, tag-free system-domain URLs, and IAM repository TRNs keyed by input key. |
+| `robot_accounts` | Robot account metadata without passwords, keyed by input key. |
+| `vpc_endpoints` | Private endpoint details and cloud-returned VPC addresses keyed by input key. |
 
-## Outputs
+## 9. Notes
 
-No outputs are currently defined.
-
-Outputs will document their exact semantics when implemented.
-
-## Notes
-
-- This repository is currently a scaffold and is not a publishable functional
-  module.
-- Real-cloud validation has not been performed.
-- Provider limitations and unsupported scenarios will be documented before
-  release.
-- Resource ownership, import behavior, replacement behavior, cost risks, and
-  cleanup procedures must be documented before the first release.
-
-## Security
-
-Please report security issues according to the [Security Policy](SECURITY.md).
-Do not disclose security vulnerabilities through public issues.
-
-## License
-
-This project is licensed under the MIT License. See [LICENSE](LICENSE).
+- Provider schema exposes no CR image-retention-policy resource, image scanning setting, CR IAM user/role authorization resource, or `force_delete` setting. The Provider does not return repository URLs or TRNs, so this module derives `repository_url` from the documented standard-instance system-domain convention and `repository_trn` from the documented CR IAM format.
+- A robot account is the supported Provider-managed push/pull identity. A supplied or generated password is not returned, but the current Provider does not mark it sensitive and can retain it in State; use an encrypted remote backend, do not put it in source files, and rotate it through an approved secret workflow.
+- The VKE integration creates a CR VPC endpoint only. Configure the resulting registry endpoint and robot credential in the VKE workload's image-pull Secret outside this module.
+- Enable the public endpoint only when necessary and use narrowly scoped CIDRs. Private repositories, private endpoints, and pull-only VKE accounts are the default posture.
+- Import existing resources before declaring them, using Provider identifiers: registry `name`, namespace `registry|name`, repository `registry|namespace|name`, and robot account `registry|username`.
+- After applying changes, run a second `terraform plan` and require `No changes` before treating the configuration as converged.
+- This module does not manage caller-owned ECS instances, subnets, security groups, or VPCs. When those resources are destroyed in the same Terraform operation, underlying ENI release can complete asynchronously after ECS deletion. If a dependent subnet deletion returns an in-use error, wait for the ENI release and rerun the destroy; do not add a fixed sleep to this module.
+- Complete scopes robot-account permissions to the configured namespace: CI has pull/push actions and VKE has pull-only access. Validate the resource identifier against the target CR API before production use.
+- `repository_url` is tag-free and uses the standard-instance system domain: `<registry>-<region>.cr.volces.com/<namespace>/<repository>`. It is not a custom or console-selected default domain. `repository_trn` uses the CR IAM format: `trn:cr:<region>:<account_id>:repository/<registry>/<namespace>/<repository>`.
